@@ -14,6 +14,13 @@ class PlayerInterface:
         self.board = Tabuleiro()
         self.create_menu()
 
+        self.enough_players = False
+        self.start = False
+        self.rec_start = False
+        self.rec_withdrawal = False
+        self.rec_move = False
+        self.reset = False
+
     def create_menu(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)

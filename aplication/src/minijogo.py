@@ -2,18 +2,23 @@ from dot import Dot
 
 class Minijogo:
     def __init__(self, section_row, section_col):
+        self.dots = []
+        self.quadradinhos = []
         self.section_row = section_row
         self.section_col = section_col
         self.board_size = 3
         self.dot_size = 20
         self.margin = 40
         self.spacing = 40
-        self.dots = []
-
         self.current_line = None
         self.start_point = None
         self.end_point = None
 
+        self.minijogo_done = False
+        self.line_drawn = False
+        self.minijogo_active = False
+        self.line_valid = False
+        
     def create_board(self, canvas):
         total_dot_size = (3 * self.spacing) + self.dot_size
         offset = (125 - total_dot_size) / 2
@@ -56,7 +61,7 @@ class Minijogo:
                 event.widget.delete(self.current_line)
             self.current_line = None
             self.start_point = None
-            
+
     def get_nearest_point(self, x, y, is_droppable=False):
         tolerance = self.dot_size // 2 if not is_droppable else self.dot_size * 1.5
         for row_points in self.dots:
