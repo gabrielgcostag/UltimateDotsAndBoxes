@@ -10,12 +10,9 @@ class Minijogo:
         self.dot_size = 20
         self.margin = 40
         self.spacing = 40
-
         self.current_line = None
         self.start_point = None
         self.end_point = None
-
-        #Control variables
         self.minijogo_done = False
         self.line_drawn = False
         self.minijogo_active = False

@@ -12,3 +12,4 @@ class Dot:
 
     def get_center(self):
         return self.x + self.size // 2, self.y + self.size // 2
+        return self.x + self.size // 2, self.y + self.size // 2
