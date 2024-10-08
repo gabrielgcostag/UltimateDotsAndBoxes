@@ -13,7 +13,6 @@ class PlayerInterface:
         self.root.resizable(False, False)
         self.board = Tabuleiro()
         self.create_menu()
-
         self.enough_players = False
         self.start = False
         self.rec_start = False
