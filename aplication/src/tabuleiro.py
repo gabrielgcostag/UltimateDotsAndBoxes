@@ -4,13 +4,10 @@ class Tabuleiro:
     def __init__(self):
         self.jogadores = []
         self.minijogos = [[Minijogo(row, col) for col in range(3)] for row in range(3)]
-        
-        #Control variables
         self.game_state = ""
         self.game_done = False
         self.active_minijogo = None
         self.have_result = False
-
 
     def create_board(self, canvas):
         for row in self.minijogos:
