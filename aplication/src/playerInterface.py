@@ -1,11 +1,13 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
+from tkinter import simpledialog
+from dog.dog_actor import DogActor
+from dog.dog_interface import DogPlayerInterface
 from tabuleiro import Tabuleiro
-from PIL import Image as ImagePil
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
-class PlayerInterface:
+class PlayerInterface(DogPlayerInterface):
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Menu Principal")
@@ -13,12 +15,16 @@ class PlayerInterface:
         self.root.resizable(False, False)
         self.board = Tabuleiro()
         self.create_menu()
-        self.enough_players = False
-        self.start = False
-        self.rec_start = False
-        self.rec_withdrawal = False
-        self.rec_move = False
-        self.reset = False
+        player_name = simpledialog.askstring(title="Player identification", prompt="Qual o seu nome?")
+        self.dog_server_interface = DogActor()
+        message = self.dog_server_interface.initialize(player_name, self)
+        messagebox.showinfo(message=message)
+        #self.enough_players = False
+        #self.start = False
+        #self.rec_start = False
+        #self.rec_withdrawal = False
+        #self.rec_move = False
+        #self.reset = False
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -41,6 +47,7 @@ class PlayerInterface:
         game_root.title("Jogo")
         game_root.geometry("620x650")
         game_root.resizable(False, False)
+        self.start_match()
 
         top_frame = tk.Frame(game_root)
         top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
@@ -54,10 +61,10 @@ class PlayerInterface:
         canvas = tk.Canvas(game_frame, width=620, height=620, bg='white')
         canvas.pack()
 
-        background_image = ImagePil.open("aplication/assets/wood_background.jpg")
-        background_image = background_image.resize((620, 620))
-        background_photo = ImageTk.PhotoImage(background_image)
-        canvas.create_image(0, 0, image=background_photo, anchor=tk.NW)
+        original_image = Image.open("assets/wood_background.jpg")
+        resized_image = original_image.resize((620, 620))
+        self.background_image = ImageTk.PhotoImage(resized_image)
+        canvas.create_image(0, 0, anchor=tk.NW, image=self.background_image)
 
         self.board = Tabuleiro()
         self.board.create_board(canvas)
@@ -74,6 +81,15 @@ class PlayerInterface:
 
     def show_settings(self):
         messagebox.showinfo("Configurações", "Aqui estarão as configurações. Como alterar cor, tamanho do tabuleiro, etc.")
+
+    def start_match(self):
+        start_status = self.dog_server_interface.start_match(2)
+        message = start_status.get_message()
+        messagebox.showinfo(message=message)
+    
+    def receive_start(self, start_status):
+        message = start_status.get_message()
+        messagebox.showinfo(message=message)
 
 if __name__ == "__main__":
     app = PlayerInterface()

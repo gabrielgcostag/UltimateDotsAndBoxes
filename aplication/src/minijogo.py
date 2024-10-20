@@ -53,8 +53,7 @@ class Minijogo:
     def on_release(self, event):
         if self.current_line:
             self.end_point = self.get_nearest_point(event.x, event.y, is_droppable=True)
-            # if self.end_point and self.are_neighbors(self.start_point, self.end_point):
-            if self.end_point:
+            if self.end_point and self.are_neighbors(self.start_point, self.end_point):
                 event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], self.end_point[0], self.end_point[1])
             else:
                 event.widget.delete(self.current_line)
@@ -68,11 +67,10 @@ class Minijogo:
                 if dot.is_near(x, y, tolerance):
                     return dot.get_center()
         return None
-    
-    #verificacao para entrega 2
-    #def are_neighbors(self, point1, point2):
-    #    if point1 and point2:
-    #        dist_x = abs(point1[0] - point2[0])
-    #        dist_y = abs(point1[1] - point2[1])
-    #        return (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
-    #    return False
+
+    def are_neighbors(self, point1, point2):
+        if point1 and point2:
+            dist_x = abs(point1[0] - point2[0])
+            dist_y = abs(point1[1] - point2[1])
+            return (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
+        return False
