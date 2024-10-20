@@ -2,6 +2,10 @@ class Dot:
     def __init__(self, x, y, size=20):
         self.x = x
         self.y = y
+        self.up = False
+        self.down = False
+        self.left = False
+        self.right = False
         self.size = size
 
     def draw(self, canvas):
@@ -11,5 +15,4 @@ class Dot:
         return abs(self.x + self.size // 2 - x) <= tolerance and abs(self.y + self.size // 2 - y) <= tolerance
 
     def get_center(self):
-        return self.x + self.size // 2, self.y + self.size // 2
         return self.x + self.size // 2, self.y + self.size // 2

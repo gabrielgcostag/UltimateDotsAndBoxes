@@ -1,7 +1,8 @@
 from dot import Dot
 
 class Minijogo:
-    def __init__(self, section_row, section_col):
+    def __init__(self, id, section_row, section_col):
+        self.id = id
         self.dots = []
         self.quadradinhos = []
         self.section_row = section_row
@@ -16,6 +17,7 @@ class Minijogo:
         self.minijogo_done = False
         self.line_drawn = False
         self.minijogo_active = False
+        self.owner = None
         self.line_valid = False
 
     def create_board(self, canvas):
@@ -40,8 +42,16 @@ class Minijogo:
         canvas.create_line(0, grid_size // 3, grid_size, grid_size // 3, width=5)
         canvas.create_line(0, 2 * grid_size // 3, grid_size, 2 * grid_size // 3, width=5)
 
-    def on_press(self, event):
+    def on_press(self, event, selecting_minijogo=False):
         self.start_point = self.get_nearest_point(event.x, event.y)
+
+        #This is used to select a new minijogo if there is no active minijogo
+        if selecting_minijogo:
+            if not self.minijogo_done:
+                self.minijogo_active = True
+                return True
+            return False
+        
         if self.start_point:
             self.current_line = event.widget.create_line(
                 self.start_point[0], self.start_point[1], event.x, event.y, fill="blue", width=5)
@@ -53,8 +63,7 @@ class Minijogo:
     def on_release(self, event):
         if self.current_line:
             self.end_point = self.get_nearest_point(event.x, event.y, is_droppable=True)
-            # if self.end_point and self.are_neighbors(self.start_point, self.end_point):
-            if self.end_point:
+            if self.end_point and self.are_neighbors(self.start_point, self.end_point):
                 event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], self.end_point[0], self.end_point[1])
             else:
                 event.widget.delete(self.current_line)
@@ -68,11 +77,29 @@ class Minijogo:
                 if dot.is_near(x, y, tolerance):
                     return dot.get_center()
         return None
-    
-    #verificacao para entrega 2
-    #def are_neighbors(self, point1, point2):
-    #    if point1 and point2:
-    #        dist_x = abs(point1[0] - point2[0])
-    #        dist_y = abs(point1[1] - point2[1])
-    #        return (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
-    #    return False
+
+    def are_neighbors(self, point1, point2):
+        if point1 and point2:
+            dist_x = abs(point1[0] - point2[0])
+            dist_y = abs(point1[1] - point2[1])
+            return (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
+        return False
+
+    def save_new_line(self, line):
+        x1y1, x2y2, direction = line
+        x1, y1 = x1y1
+        x2, y2 = x2y2
+        if direction == 'horizontal':
+            self.dots[x1][y1].right = True
+            self.dots[x2][y2].left = True
+        else:
+            self.dots[x1][y1].down = True
+            self.dots[x2][y2].up = True
+
+    def check_box_filled(self):
+        for x in range(3):
+            for y in range(3):
+                if self.dots [x][y].down and self.dots[x][y].right and self.dots[x+1][y+1].up and self.dots[x+1][y+1].left:
+                    if not self.quadradinhos[x][y].box_filled:
+                        return True, (x, y)
+        return False, None

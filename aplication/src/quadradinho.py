@@ -1,3 +1,4 @@
 class Quadradinho:
     def __init__(self):
-        self.box_fiiled = False
+        self.box_filled = False
+        self.owner = None
