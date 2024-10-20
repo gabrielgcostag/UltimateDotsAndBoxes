@@ -13,12 +13,7 @@ class PlayerInterface(DogPlayerInterface):
         self.root.title("Menu Principal")
         self.root.geometry("300x200")
         self.root.resizable(False, False)
-        self.board = Tabuleiro()
-        self.create_menu()
-        player_name = simpledialog.askstring(title="Player identification", prompt="Qual o seu nome?")
-        self.dog_server_interface = DogActor()
-        message = self.dog_server_interface.initialize(player_name, self)
-        messagebox.showinfo(message=message)
+        self.board = None
         #self.enough_players = False
         #self.start = False
         #self.rec_start = False
@@ -91,6 +86,71 @@ class PlayerInterface(DogPlayerInterface):
         message = start_status.get_message()
         messagebox.showinfo(message=message)
 
+    def update_game_state(self, move):
+        modified_minijogo = self.board.find_minijogo_id(move['modified_minijogo'])
+        lines = move['lines']
+        for line in lines:
+            modified_minijogo.draw_line(line)
+
+ # --------------------------------------------------------------- INITIALIZE --------------------------------------------------------------- #
+    # THIS METHOD HAS TO BE CALLED WHEN THE USER RUNS THE PROGRAM
+    def initialize(self):
+        # First step: Instantiate Tkinter Elements
+        self.create_menu()
+
+        # Second step: Ask for player identification
+        player_name = simpledialog.askstring(title="Player identification", prompt="Qual o seu nome?")
+
+        # Third step: Initialize the DOG server interface
+        self.dog_server_interface = DogActor()
+        message = self.dog_server_interface.initialize(player_name, self)
+        messagebox.showinfo(message=message)
+
+ # -------------------------------------------------------------- CONNECT DOTS -------------------------------------------------------------- #
+    # THIS METHOD HAS TO BE CALLED WHEN THE PLAYER CLICKS AND DRAGS THE MOUSE TO DRAW A LINE
+    def connect_dots(self):
+        play_again = True
+        lines = []
+
+        # First step: GUARANTEE THERE IS AN ACTIVE MINIJOGO (use case)
+        while not self.board.check_active_minijogo():
+            messagebox.showinfo("Erro", "Selecione um minijogo válido para jogar.")
+            self.board.on_press(None, selecting_minijogo=True)
+        self.board.highlight_active_minijogo()
+
+        while play_again:
+            # Second step: DRAW LINE
+            # This part is implemented directly in the Tabuleiro class, as it is a GUI interaction //PRECISO TIRAR DÚVIDAS COM O GABRIEL
+            # Ther coords of the drawn line will be stored as ints in the line_drawn_int variable
+            line_drawn_int = (('coord_x', 'coord_y', 'direction'), ('coord_x', 'coord_y', 'direction'))
+
+            # Third step: CREATE MOVE DICTIONARY
+            lines.append(line_drawn_int)
+            for jogador in self.board.jogadores:
+                if jogador.is_turn:
+                    move_maker = jogador.nome
+                    break
+            
+            move = {'match_status' : 'progress', # Obligatory for DOG to understand the message
+                    'modified_minijogo' : self.board.active_minijogo.id,
+                    'lines' : lines,
+                    'next_active_minijogo' : None,
+                    'game_done' : False,
+                    'move_maker' : move_maker}
+            
+            # Fourth step: UPDATE GAME STATE (use case)
+            play_again = self.board.update_game_state(move)
+
+        # Fifth step: CHECK BOARD RESULT
+        move = self.board.check_board_result(move)
+        self.dog_server_interface.send_move(move)
+
+ # ------------------------------------------------------------------------------------------------------------------------------------------ #
+
+
 if __name__ == "__main__":
+    # main function will describe the flow of the program as described by the Interaction Overview Diagram
+    # Instantiate the PlayerInterface class and run the mainloop outside of initialize method
     app = PlayerInterface()
+    app.initialize()
     app.root.mainloop()
