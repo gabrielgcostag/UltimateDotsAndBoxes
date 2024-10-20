@@ -14,6 +14,7 @@ class PlayerInterface(DogPlayerInterface):
         self.root.geometry("300x200")
         self.root.resizable(False, False)
         self.board = None
+        self.initialize()
         #self.enough_players = False
         #self.start = False
         #self.rec_start = False
@@ -147,10 +148,8 @@ class PlayerInterface(DogPlayerInterface):
 
  # ------------------------------------------------------------------------------------------------------------------------------------------ #
 
-
 if __name__ == "__main__":
     # main function will describe the flow of the program as described by the Interaction Overview Diagram
     # Instantiate the PlayerInterface class and run the mainloop outside of initialize method
     app = PlayerInterface()
-    app.initialize()
     app.root.mainloop()
