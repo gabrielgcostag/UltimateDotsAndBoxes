@@ -66,7 +66,7 @@ class Minijogo:
         # 1.1: If the point is valid, select it as the start point
         if self.start_point:
             self.current_line = event.widget.create_line(
-                self.start_point[0], self.start_point[1], event.x, event.y, fill="blue", width=5)
+                self.start_point.getCenter()[0], self.start_point.getCenter()[1], event.x, event.y, fill="blue", width=5)
         # 1.2: If the point is not valid, set line drawn to False and return
         else:
             self.line_drawn = False
@@ -74,53 +74,71 @@ class Minijogo:
     def showLineExtending(self, event):
         # 2: Show the line extending from the start point to the current mouse position
         if self.current_line:
-            event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], event.x, event.y)
+            event.widget.coords(self.current_line, self.start_point.getCenter()[0], self.start_point.getCenter()[1], event.x, event.y)
 
     def endDrawingLine(self, event):
-        # 3: Get the nearest point to the mouse release
-        self.end_point = self.getNearestPoint(event.x, event.y)
+        if self.current_line:
+            # 3: Get the nearest point to the mouse release
+            self.end_point = self.getNearestPoint(event.x, event.y)
 
-        # 3.1: If the point is not valid, set line drawn to False
-        if not self.end_point:
-            self.line_drawn = False
-        else:
-            # 4: Check if the start and end points are neighbors
-            if not self.areNeighbors(self.start_point, self.end_point):
+            # 3.1: If the point is not valid, set line drawn to False
+            if not self.end_point:
                 self.line_drawn = False
             else:
-                # Update the line coordinates
-                event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], self.end_point[0], self.end_point[1])
-
-                # 5: Determine line direction and order points
-                if self.start_point[0] == self.end_point[0]:  # Vertical line
-                    direction = 'vertical'
-                    if self.start_point[1] > self.end_point[1]:
-                        self.start_point, self.end_point = self.end_point, self.start_point
-                else:  # Horizontal line
-                    direction = 'horizontal'
-                    if self.start_point[0] > self.end_point[0]:
-                        self.start_point, self.end_point = self.end_point, self.start_point
-
-                # 5: Check if the line is already drawn
-                if self.start_point.right or self.start_point.down:
+                # 4: Check if the start and end points are neighbors
+                if not self.areNeighbors(self.start_point.getCenter(), self.end_point.getCenter()):
                     self.line_drawn = False
                 else:
-                    self.line_drawn = True
-                    self.new_line = (self.start_point, self.end_point, direction)
+                    # Update the line coordinates
+                    event.widget.coords(self.current_line, self.start_point.getCenter()[0], self.start_point.getCenter()[1], self.end_point.getCenter()[0], self.end_point.getCenter()[1])
+
+                    # 5: Determine line direction and order points
+                    if self.start_point.x == self.end_point.x:  # Vertical line
+                        direction = 'vertical'
+                        if self.start_point.y > self.end_point.y:
+                            self.start_point, self.end_point = self.end_point, self.start_point
+                    else:  # Horizontal line
+                        direction = 'horizontal'
+                        if self.start_point.x > self.end_point.x:
+                            self.start_point, self.end_point = self.end_point, self.start_point
+
+                    # 5: Check if the line is already drawn
+                    already_drawn = self.alreadyDrawn(self.start_point, self.end_point, direction)
+                    if already_drawn:
+                        self.line_drawn = False
+                    else:
+                        # 6: Save information about the new line
+                        self.saveNewLineInfo(direction)
 
         # Final cleanup, reset line and points
-        event.widget.delete(self.current_line)
         self.current_line = None
         self.start_point = None
         self.end_point = None
+
+        # Erase the line visually if it is not valid
+        if not self.line_drawn:
+            event.widget.delete(self.current_line)
     # --------------------------------------------------------------------------------------------------------------------------------------- #
+
+    def saveNewLineInfo(self, direction):
+        self.line_drawn = True
+        self.new_line = (self.start_point, self.end_point, direction)
+
+    def alreadyDrawn(self, start_point, end_point, direction):
+        if direction == 'horizontal':
+            if start_point.right and end_point.left:
+                return True
+        else:
+            if start_point.down and end_point.up:
+                return True
+        return False
 
     def getNearestPoint(self, x, y):
         tolerance = self.dot_size // 2
         for row_points in self.dots:
             for dot in row_points:
                 if dot.isNear(x, y, tolerance):
-                    return dot.getCenter()
+                    return dot
         return None
     
     def areNeighbors(self, point1, point2):

@@ -42,17 +42,18 @@ class Tabuleiro:
             # self.active_minijogo.highlight() # TEM Q IMPLEMENTAR O HIGHLIGHT
             return
         
-        # 3: If there is an active minijogo, draw a line
-        self.active_minijogo.startDrawingLine(event)
+        # 3: If there is an active minijogo, draw a line // This effectively calls all the sequence needed for draw line diagram
+        self.active_minijogo.startDrawingLine(event) # LINHA SÓ ESTÁ SENDO EFETIVAMENTE SALVA UMA ITERACAO DEPOIS, POIS METODO NÃO ESPERA RETORNO DO RELEASE, MAS DEVERIA #TEMPORARIO
 
         # 3.1: If the line is not drawn, return
         if not self.active_minijogo.line_drawn:
             return
 
-        # 4: Create a move dictionary with the drawn line, and reset the attributes pertaining to the line from the active minijogo
-        self.createMoveDictionary(self.active_minijogo.new_line)
+        # 4: Create a move dictionary with the drawn line, and reset the attributes pertaining to creation of line from the active minijogo
+        print(f"Line drawn: {self.active_minijogo.new_line}") #TEMPORARIO
+        #self.createMoveDictionary(self.active_minijogo.new_line)
         self.active_minijogo.line_drawn = False
-        self,active_minijogo.new_line = None
+        self.active_minijogo.new_line = None
 
     def findActiveMinijogo(self, event):
         for row in self.minijogos:
