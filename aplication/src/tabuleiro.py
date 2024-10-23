@@ -204,9 +204,15 @@ class Tabuleiro:
                 player.is_turn = not player.is_turn
             move['match_status'] = 'next'
         
-        return move
+        self.sendmove(move) # TEM Q IMPLEMENTAR O ENVIO DO MOVIMENTO
 
     # --------------------------------------------------------------------------------------------------------------------------------------- #
+
+    def notify_game_over(self):
+        pass
+
+    def sendmove(self, move):
+        pass
 
     def updateUI(self):
         #self.removeHighlights()
