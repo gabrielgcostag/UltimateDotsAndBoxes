@@ -1,7 +1,7 @@
 from dot import Dot
 
 class Minijogo:
-    def __init__(self, id, section_row, section_col):
+    def __init__(self, section_row, section_col, id):
         self.id = id
         self.dots = []
         self.quadradinhos = []
@@ -11,12 +11,14 @@ class Minijogo:
         self.dot_size = 20
         self.margin = 40
         self.spacing = 40
+
         self.current_line = None
         self.start_point = None
         self.end_point = None
-        self.minijogo_done = False
+        self.new_line = None
+
+        self.finished = False
         self.line_drawn = False
-        self.minijogo_active = False
         self.owner = None
         self.line_valid = False
 
@@ -42,47 +44,91 @@ class Minijogo:
         canvas.create_line(0, grid_size // 3, grid_size, grid_size // 3, width=5)
         canvas.create_line(0, 2 * grid_size // 3, grid_size, 2 * grid_size // 3, width=5)
 
-    def on_press(self, event, selecting_minijogo=False):
-        self.start_point = self.get_nearest_point(event.x, event.y)
-
-        #This is used to select a new minijogo if there is no active minijogo
-        if selecting_minijogo:
-            if not self.minijogo_done:
-                self.minijogo_active = True
-                return True
-            return False
+    def selectNewActiveMinijogo(self, event):
+        x_start = self.section_col * 200
+        x_end = x_start + 200
+        y_start = self.section_row * 200
+        y_end = y_start + 200
+    
+    # Check if the click is within the minijogo's area
+        if x_start <= event.x < x_end and y_start <= event.y < y_end:
+            # Check if the minijogo is finished
+            if not self.finished:
+                return self
         
+        # Return None if the click is outside the area, or if the minijogo is finished
+        return None
+
+    # -------------------------------------------------------------- DRAW LINE -------------------------------------------------------------- #
+    def startDrawingLine(self, event):
+        # 1: Get the nearest point to the click
+        self.start_point = self.getNearestPoint(event.x, event.y)
+        # 1.1: If the point is valid, select it as the start point
         if self.start_point:
             self.current_line = event.widget.create_line(
                 self.start_point[0], self.start_point[1], event.x, event.y, fill="blue", width=5)
+        # 1.2: If the point is not valid, set line drawn to False and return
+        else:
+            self.line_drawn = False
 
-    def on_drag(self, event):
+    def showLineExtending(self, event):
+        # 2: Show the line extending from the start point to the current mouse position
         if self.current_line:
             event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], event.x, event.y)
 
-    def on_release(self, event):
-        if self.current_line:
-            self.end_point = self.get_nearest_point(event.x, event.y, is_droppable=True)
-            if self.end_point and self.are_neighbors(self.start_point, self.end_point):
-                event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], self.end_point[0], self.end_point[1])
+    def endDrawingLine(self, event):
+        # 3: Get the nearest point to the mouse release
+        self.end_point = self.getNearestPoint(event.x, event.y)
+
+        # 3.1: If the point is not valid, set line drawn to False
+        if not self.end_point:
+            self.line_drawn = False
+        else:
+            # 4: Check if the start and end points are neighbors
+            if not self.areNeighbors(self.start_point, self.end_point):
+                self.line_drawn = False
             else:
-                event.widget.delete(self.current_line)
-            self.current_line = None
-            self.start_point = None
-            
-    def get_nearest_point(self, x, y, is_droppable=False):
-        tolerance = self.dot_size // 2 if not is_droppable else self.dot_size * 1.5
+                # Update the line coordinates
+                event.widget.coords(self.current_line, self.start_point[0], self.start_point[1], self.end_point[0], self.end_point[1])
+
+                # 5: Determine line direction and order points
+                if self.start_point[0] == self.end_point[0]:  # Vertical line
+                    direction = 'vertical'
+                    if self.start_point[1] > self.end_point[1]:
+                        self.start_point, self.end_point = self.end_point, self.start_point
+                else:  # Horizontal line
+                    direction = 'horizontal'
+                    if self.start_point[0] > self.end_point[0]:
+                        self.start_point, self.end_point = self.end_point, self.start_point
+
+                # 5: Check if the line is already drawn
+                if self.start_point.right or self.start_point.down:
+                    self.line_drawn = False
+                else:
+                    self.line_drawn = True
+                    self.new_line = (self.start_point, self.end_point, direction)
+
+        # Final cleanup, reset line and points
+        event.widget.delete(self.current_line)
+        self.current_line = None
+        self.start_point = None
+        self.end_point = None
+    # --------------------------------------------------------------------------------------------------------------------------------------- #
+
+    def getNearestPoint(self, x, y):
+        tolerance = self.dot_size // 2
         for row_points in self.dots:
             for dot in row_points:
-                if dot.is_near(x, y, tolerance):
-                    return dot.get_center()
+                if dot.isNear(x, y, tolerance):
+                    return dot.getCenter()
         return None
-
-    def are_neighbors(self, point1, point2):
+    
+    def areNeighbors(self, point1, point2):
         if point1 and point2:
             dist_x = abs(point1[0] - point2[0])
             dist_y = abs(point1[1] - point2[1])
-            return (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
+            are_neighbors = (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
+            return are_neighbors
         return False
 
     def save_new_line(self, line):

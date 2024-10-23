@@ -1,15 +1,17 @@
 from minijogo import Minijogo
+from tkinter import messagebox
 
 class Tabuleiro:
     def __init__(self, player_Interface):
         self.player_interface = player_Interface
         self.jogadores = []
-        self.minijogos = [[Minijogo(row, col, row+col+1) for col in range(3)] for row in range(3)]
-        self.game_state = ""
+        self.minijogos = [[Minijogo(row, col, 3*row + col + 1) for col in range(3)] for row in range(3)]
+        self.game_state = "progress"
         self.game_done = False
         self.minijogo_completed = 0
         self.active_minijogo = None
         self.have_result = False
+        self.selecting_minijogo = False
 
     def create_board(self, canvas):
         for row in self.minijogos:
@@ -17,20 +19,53 @@ class Tabuleiro:
                 game.create_board(canvas)
                 game.draw_tic_tac_toe_grid(canvas)
 
-    def on_press(self, event, selecting_minijogo=False):
-        for row in self.minijogos:
-            for game in row:
-                game.on_press(event, selecting_minijogo)
+    # -------------------------------------------------------------- CONNECT DOTS -------------------------------------------------------------- #
+    # THIS METHOD IS CALLED WHEN THE PLAYER CLICKS ON THE BOARD
+    def connectDots(self, event):
+        # 1: Check if it is the local player's turn
+        if self.game_state != "progress":
+            return
+        
+        # 2: Check if there is an active minijogo
+        if self.active_minijogo is None:
+            # 2.1: If there is no active minijogo, select one with the click
+            active_minijogo = self.findActiveMinijogo(event)
+            
+            # 2.2.1: If there the clicked minijogo is not valid, notify the player
+            if not active_minijogo:
+                messagebox.showinfo("Erro", "Selecione um minijogo válido para jogar.")
+                return
+            
+            # 2.2.2: If the clicked minijogo is valid, set it as active and highlight it 
+            self.active_minijogo = active_minijogo
+            print(f"Minijogo {self.active_minijogo.id} selecionado.") #TEMPORARIO
+            # self.active_minijogo.highlight() # TEM Q IMPLEMENTAR O HIGHLIGHT
+            return
+        
+        # 3: If there is an active minijogo, draw a line
+        self.active_minijogo.startDrawingLine(event)
 
-    def on_drag(self, event):
-        for row in self.minijogos:
-            for game in row:
-                game.on_drag(event)
+        # 3.1: If the line is not drawn, return
+        if not self.active_minijogo.line_drawn:
+            return
 
-    def on_release(self, event):
+        # 4: Create a move dictionary with the drawn line, and reset the attributes pertaining to the line from the active minijogo
+        self.createMoveDictionary(self.active_minijogo.new_line)
+        self.active_minijogo.line_drawn = False
+        self,active_minijogo.new_line = None
+
+    def findActiveMinijogo(self, event):
         for row in self.minijogos:
             for game in row:
-                game.on_release(event)
+                if game.selectNewActiveMinijogo(event):
+                    return game
+        return None
+
+    def showLineExtending(self, event):
+        self.active_minijogo.showLineExtending(event)
+
+    def endDrawingLine(self, event):
+        self.active_minijogo.endDrawingLine(event)
 
     def check_active_minijogo(self):
         if self.active_minijogo is None:
@@ -88,7 +123,6 @@ class Tabuleiro:
         # STEP 4.5: update minijogo owner attributes (OR play_again = True if minijogo not done)
         if minijogo_done:
             self.active_minijogo.minijogo_done = True
-            self.active_minijogo.minijogo_active = False
             self.active_minijogo.owner = jogador
         else:
             play_again = True
@@ -99,7 +133,6 @@ class Tabuleiro:
         if move['next_active_minijogo'] is not None:
             # STEP 4.7: Set next active minijogo (OR set it to None if there is no next active minijogo)
             self.active_minijogo = self.find_minijogo_id(move['next_active_minijogo'])
-            self.active_minijogo.minijogo_active = True
         else:
             self.active_minijogo = None
 

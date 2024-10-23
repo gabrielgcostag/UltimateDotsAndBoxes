@@ -11,8 +11,8 @@ class Dot:
     def draw(self, canvas):
         canvas.create_oval(self.x, self.y, self.x + self.size, self.y + self.size, fill="black")
 
-    def is_near(self, x, y, tolerance):
+    def isNear(self, x, y, tolerance):
         return abs(self.x + self.size // 2 - x) <= tolerance and abs(self.y + self.size // 2 - y) <= tolerance
 
-    def get_center(self):
+    def getCenter(self):
         return self.x + self.size // 2, self.y + self.size // 2
