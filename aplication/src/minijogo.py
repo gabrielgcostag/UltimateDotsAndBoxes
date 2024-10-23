@@ -1,4 +1,5 @@
 from dot import Dot
+from quadradinho import Quadradinho
 
 class Minijogo:
     def __init__(self, section_row, section_col, id):
@@ -36,6 +37,12 @@ class Minijogo:
                 row_points.append(dot)
             self.dots.append(row_points)
 
+        for row in range(3):
+            row_boxes = []
+            for col in range(3):
+                row_boxes.append(Quadradinho())
+            self.quadradinhos.append(row_boxes)
+
     def draw_tic_tac_toe_grid(self, canvas):
         grid_size = 600
         canvas.create_line(grid_size // 3, 0, grid_size // 3, grid_size, width=5)
@@ -60,13 +67,13 @@ class Minijogo:
         return None
 
     # -------------------------------------------------------------- DRAW LINE -------------------------------------------------------------- #
-    def startDrawingLine(self, event):
+    def startDrawingLine(self, event, color):
         # 1: Get the nearest point to the click
         self.start_point = self.getNearestPoint(event.x, event.y)
         # 1.1: If the point is valid, select it as the start point
         if self.start_point:
             self.current_line = event.widget.create_line(
-                self.start_point.getCenter()[0], self.start_point.getCenter()[1], event.x, event.y, fill="blue", width=5)
+                self.start_point.getCenter()[0], self.start_point.getCenter()[1], event.x, event.y, fill=color, width=5)
         # 1.2: If the point is not valid, set line drawn to False and return
         else:
             self.line_drawn = False
@@ -86,7 +93,7 @@ class Minijogo:
                 self.line_drawn = False
             else:
                 # 4: Check if the start and end points are neighbors
-                if not self.areNeighbors(self.start_point.getCenter(), self.end_point.getCenter()):
+                if not self.areNeighbors(self.start_point, self.end_point):
                     self.line_drawn = False
                 else:
                     # Update the line coordinates
@@ -110,14 +117,15 @@ class Minijogo:
                         # 6: Save information about the new line
                         self.saveNewLineInfo(direction)
 
+        # Erase the line visually if it is not valid
+        if not self.line_drawn:
+            event.widget.delete(self.current_line)
+
         # Final cleanup, reset line and points
         self.current_line = None
         self.start_point = None
         self.end_point = None
-
-        # Erase the line visually if it is not valid
-        if not self.line_drawn:
-            event.widget.delete(self.current_line)
+        
     # --------------------------------------------------------------------------------------------------------------------------------------- #
 
     def saveNewLineInfo(self, direction):
@@ -142,6 +150,8 @@ class Minijogo:
         return None
     
     def areNeighbors(self, point1, point2):
+        point1 = point1.getCenter()
+        point2 = point2.getCenter()
         if point1 and point2:
             dist_x = abs(point1[0] - point2[0])
             dist_y = abs(point1[1] - point2[1])
@@ -149,7 +159,7 @@ class Minijogo:
             return are_neighbors
         return False
 
-    def save_new_line(self, line):
+    def saveNewLine(self, line):
         x1y1, x2y2, direction = line
         x1, y1 = x1y1
         x2, y2 = x2y2
@@ -160,10 +170,13 @@ class Minijogo:
             self.dots[x1][y1].down = True
             self.dots[x2][y2].up = True
 
-    def check_box_filled(self):
+    def checkBoxesFilled(self):
+        any_filled = False
+        filled_boxes = []
         for x in range(3):
             for y in range(3):
                 if self.dots [x][y].down and self.dots[x][y].right and self.dots[x+1][y+1].up and self.dots[x+1][y+1].left:
                     if not self.quadradinhos[x][y].box_filled:
-                        return True, (x, y)
-        return False, None
+                        any_filled = True
+                        filled_boxes.append((x, y))
+        return any_filled, filled_boxes
