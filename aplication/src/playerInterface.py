@@ -46,11 +46,11 @@ class PlayerInterface():
     def back_to_menu(self, game_root):
         game_root.destroy()
 
-    def update_game_state(self, move):
-        modified_minijogo = self.board.find_minijogo_id(move['modified_minijogo'])
-        lines = move['lines']
-        for line in lines:
-            modified_minijogo.draw_line(line)
+    def notifyGameOver(self):
+        pass
+
+    def sendMove(self, move):
+        pass
 
  # --------------------------------------------------------------- INITIALIZE --------------------------------------------------------------- #
     # THIS METHOD HAS TO BE CALLED WHEN THE USER RUNS THE PROGRAM

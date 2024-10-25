@@ -23,31 +23,31 @@ class Tabuleiro:
 
     # -------------------------------------------------------------- CONNECT DOTS -------------------------------------------------------------- #
     # THIS METHOD IS CALLED WHEN THE PLAYER CLICKS ON THE BOARD
-    def connectDots(self, event):
+    def connectDots(self, click):
         # This test is used to check if the player got here by clicking on the board or by releasing the mouse button
         if self.active_minijogo:
-            if event is None and not self.active_minijogo.line_drawn:
+            if click is None and not self.active_minijogo.line_drawn:
                 return
 
         # 1: Check if it is the local player's turn
-        if self.game_state != "progress":
+        if self.getGameState() != "progress":
             return
         
         # 2: Check if there is an active minijogo
-        if self.active_minijogo is None:
-            if event is not None:
+        if self.getActiveMinijogo() is None:
+            if click is not None:
                 # 2.1: If there is no active minijogo, select one with the click
-                active_minijogo = self.findActiveMinijogo(event)
+                clicked_minijogo = self.findClickedMinijogo(click)
                 
                 # 2.2.1: If the clicked minijogo is not valid, notify the player
-                if not active_minijogo:
-                    messagebox.showinfo("Erro", "Selecione um minijogo válido para jogar.")
+                if not clicked_minijogo:
+                    self.notifyNotValidMinijogo()
                     return
                 
-                # 2.2.2: If the clicked minijogo is valid, set it as active and highlight it 
-                self.active_minijogo = active_minijogo
+                # 2.2.2: If the clicked minijogo is valid, set it as active and highlight it
+                self.updateActiveMinijogo(clicked_minijogo)
                 print(f"Minijogo {self.active_minijogo.id} selecionado.") #TEMPORARIO
-                # self.active_minijogo.highlight() # TEM Q IMPLEMENTAR O HIGHLIGHT
+                # self.HighlightActiveMinijogo() # TEM Q IMPLEMENTAR O HIGHLIGHT
                 return
             else:
                 return
@@ -56,8 +56,8 @@ class Tabuleiro:
         play_again = True
         lines = []
         while play_again:
-            if event is not None:
-                self.active_minijogo.startDrawingLine(event, self.findActivePlayer().color)
+            if click is not None:
+                self.active_minijogo.startDrawingLine(click, self.findActivePlayer().color)
 
             # 3.1: If the line is not drawn, return
             if not self.active_minijogo.line_drawn:
@@ -77,6 +77,15 @@ class Tabuleiro:
         self.checkBoardResult(move)
 
     # --------------------------------------------------------------------------------------------------------------------------------------- #
+
+    def getActiveMinijogo(self):
+        return self.active_minijogo
+    
+    def updateActiveMinijogo(self, minijogo):
+        self.active_minijogo = minijogo
+    
+    def notifyNotValidMinijogo(self):
+        messagebox.showinfo("Erro", "Selecione um minijogo válido para jogar.")
 
     # ---------------------------------------------------------- UPDATE GAME STATE ---------------------------------------------------------- #
     # THIS METHOD IS CALLED INSIDE THE CONNECT DOTS AND RECEIVE MOVE METHODS
@@ -107,7 +116,8 @@ class Tabuleiro:
             modified_minijogo.updateBoxMatrix(boxes_coords, move_maker)
 
             # 4.2: Check if the modified minijogo is finished
-            minijogo_done = modified_minijogo.checkFinish()
+            minijogo_done = modified_minijogo.checkFinish(self.findActivePlayer())
+            print(minijogo_done) #TEMPORARIO
 
             # 4.2.1: Update minijogo owner attributes 
             if not minijogo_done:
@@ -143,83 +153,83 @@ class Tabuleiro:
 
         # If no minijogo was completed, toggle active player, modify move dictionary and return
         if modified_minijogo.finished == False:
-            for player in self.jogadores:
-                player.is_turn = not player.is_turn
+            self.toggleActivePlayer()
             move['match_status'] = 'next'
-            return move
 
-        # STEP 5.1: Get completed minijogo position in the minijogos matrix
-        x = modified_minijogo.id // 3
-        y = modified_minijogo.id % 3
-
-        # STEP 5.2: See which player won the minijogo
-        p_winner = modified_minijogo.owner
-
-        # STEP 5.3: Check if a player has 3 horizontal minijogos
-        if all(self.minijogos[x][i].owner == p_winner for i in range(3)):
-            win_condition = True
-
-        # STEP 5.4: Check if a player has 3 vertical minijogos
-        elif all(self.minijogos[i][y].owner == p_winner for i in range(3)):
-            win_condition = True
-
-        # STEP 5.5: Check if a player has 3 diagonal minijogos (primary diagonal)
-        elif x == y and all(self.minijogos[i][i].owner == p_winner for i in range(3)):
-            win_condition = True
-
-        # STEP 5.6: Check if a player has 3 diagonal minijogos (secondary diagonal)
-        elif x + y == 2 and all(self.minijogos[i][2-i].owner == p_winner for i in range(3)):
-            win_condition = True
-
-        # STEP 5.7: Check if a player has 5 total minijogos
-        elif sum(game.owner == p_winner for row in self.minijogos for game in row) == 5:
-            win_condition = True
-
-        # STEP 5.8: Set local game over and update move dictionary according to the result
-        if win_condition:
-            self.game_done = True
-            for player in self.jogadores:
-                player.is_turn = False
-                if player.name == p_winner:
-                    player.is_winner = True
-            
-            self.notify_game_over() # TEM Q IMPLEMENTAR O AVISO DE GAME OVER
-
-            move['match_status'] = 'finished'
-            move['game_done'] = True
         else:
-            for player in self.jogadores:
-                player.is_turn = not player.is_turn
-            move['match_status'] = 'next'
+            # STEP 5.1: Get completed minijogo position in the minijogos matrix
+            x, y = self.getCoordsFromID(modified_minijogo.id)
+
+            # STEP 5.2: See which player won the minijogo
+            p_winner = modified_minijogo.getOwner()
+
+            # STEP 5.3: Check if a player has 3 horizontal minijogos
+            if all(self.minijogos[x][i].getOwner() == p_winner for i in range(3)):
+                win_condition = True
+
+            # STEP 5.4: Check if a player has 3 vertical minijogos
+            elif all(self.minijogos[i][y].getOwner() == p_winner for i in range(3)):
+                win_condition = True
+
+            # STEP 5.5: Check if a player has 3 diagonal minijogos (primary diagonal)
+            elif x == y:
+                if x == y and all(self.minijogos[i][i].getOwner() == p_winner for i in range(3)):
+                    win_condition = True
+
+            # STEP 5.6: Check if a player has 3 diagonal minijogos (secondary diagonal)
+            elif x + y == 2:
+                if all(self.minijogos[i][2-i].getOwner() == p_winner for i in range(3)):
+                    win_condition = True
+
+            # STEP 5.7: Check if a player has 5 total minijogos
+            elif sum(game.getOwner() == p_winner for row in self.minijogos for game in row) == 5:
+                win_condition = True
+
+            # STEP 5.8: Set local game over and update move dictionary according to the result
+            if win_condition:
+                move = self.endLocalGame(move, p_winner)
+                self.player_interface.notifyGameOver(p_winner) # TEM Q IMPLEMENTAR O AVISO DE GAME OVER
+
+            else:
+                self.toggleActivePlayer()
+                move['match_status'] = 'next'
         
-        self.sendmove(move) # TEM Q IMPLEMENTAR O ENVIO DO MOVIMENTO
+        self.player_interface.sendMove(move) # TEM Q IMPLEMENTAR O ENVIO DO MOVIMENTO
 
     # --------------------------------------------------------------------------------------------------------------------------------------- #
 
-    def notify_game_over(self):
-        pass
+    def getGameState(self):
+        return self.game_state
 
-    def sendmove(self, move):
-        pass
+    def toggleActivePlayer(self):
+        #self.game_state = "wait" #TEMPORARIO, REMOVER PARA IMPLEMENTAR DOG
+        for player in self.jogadores:
+            player.is_turn = not player.is_turn
+
+    def endLocalGame(self, move, winner):
+        self.game_done = True
+        for player in self.jogadores:
+            player.is_turn = False
+            if player == winner:
+                player.is_winner = True
+
+        move['match_status'] = 'finished'
+        return move
+
+    def getCoordsFromID(self, id):
+        return id // 3, id % 3
 
     def updateUI(self):
         #self.removeHighlights()
         if self.active_minijogo is not None:
             #self.active_minijogo.highlight()
-            for row in self.active_minijogo.quadradinhos:
-                for quadradinho in row:
-                    if quadradinho.owner is None:
-                        print("None", end=" ")
-                    else:
-                        print(4*quadradinho.owner.name[0], end=" ")
-                print()
-            print()
 
         #self.updateMinijogoOwnersUI()
         #self.updateBoxOwnersUI()
         #print("UI atualizada.") #TEMPORARIO
+            pass
 
-    def findActiveMinijogo(self, event):
+    def  findClickedMinijogo(self, event):
         for row in self.minijogos:
             for game in row:
                 if game.selectNewActiveMinijogo(event):
@@ -252,7 +262,6 @@ class Tabuleiro:
         move = {'match_status' : 'progress', # Obligatory for DOG to understand the message
                 'modified_minijogo' : self.active_minijogo.id,
                 'lines' : lines,
-                'game_done' : False,
                 'move_maker' : self.findActivePlayer().name}
         return move
 
