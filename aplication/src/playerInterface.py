@@ -46,8 +46,8 @@ class PlayerInterface():
     def back_to_menu(self, game_root):
         game_root.destroy()
 
-    def notifyGameOver(self):
-        pass
+    def notifyGameOver(self, winner):
+        messagebox.showinfo("Game Over", "O jogador " + winner.name + " venceu!")
 
     def sendMove(self, move):
         pass

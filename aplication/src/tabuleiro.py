@@ -46,7 +46,6 @@ class Tabuleiro:
                 
                 # 2.2.2: If the clicked minijogo is valid, set it as active and highlight it
                 self.updateActiveMinijogo(clicked_minijogo)
-                print(f"Minijogo {self.active_minijogo.id} selecionado.") #TEMPORARIO
                 # self.HighlightActiveMinijogo() # TEM Q IMPLEMENTAR O HIGHLIGHT
                 return
             else:
@@ -117,7 +116,6 @@ class Tabuleiro:
 
             # 4.2: Check if the modified minijogo is finished
             minijogo_done = modified_minijogo.checkFinish(self.findActivePlayer())
-            print(minijogo_done) #TEMPORARIO
 
             # 4.2.1: Update minijogo owner attributes 
             if not minijogo_done:
@@ -128,6 +126,7 @@ class Tabuleiro:
             else:
                 self.last_filled_box = None
                 modified_minijogo.owner = move_maker
+                modified_minijogo.finished = True
 
                 # 4.3: Decide the next active minijogo
                 next_active_minijogo = self.decideNextMinijogo(boxes_coords)

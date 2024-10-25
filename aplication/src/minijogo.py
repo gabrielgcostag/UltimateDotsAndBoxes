@@ -185,17 +185,18 @@ class Minijogo:
         for x, y in boxes_coords:
             self.quadradinhos[x][y].box_filled = True
             self.quadradinhos[x][y].owner = move_maker
-        #TEMPORARIO PARA TESTES
-        for row in self.quadradinhos:
-            for quadradinho in row:
-                if quadradinho.getOwner() is None:
-                    print("None", end=" ")
-                else:
-                    print(4*quadradinho.getOwner().name[0], end=" ")
-            print()
-        print()
+        # #TEMPORARIO PARA TESTES
+        # for row in self.quadradinhos:
+        #     for quadradinho in row:
+        #         if quadradinho.getOwner() is None:
+        #             print("None", end=" ")
+        #         else:
+        #             print(4*quadradinho.getOwner().name[0], end=" ")
+        #     print()
+        # print()
 
     def checkFinish(self, player):
+        print("Minijogo finished test =", sum(quadradinho.getOwner() == player for row in self.quadradinhos for quadradinho in row) >= 5)
         return sum(quadradinho.getOwner() == player for row in self.quadradinhos for quadradinho in row) >= 5
     
     def getOwner(self):
