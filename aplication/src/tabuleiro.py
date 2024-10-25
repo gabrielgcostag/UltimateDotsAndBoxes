@@ -76,7 +76,6 @@ class Tabuleiro:
         # 6: Check if the game is done
         self.checkBoardResult(move)
 
-
     # --------------------------------------------------------------------------------------------------------------------------------------- #
 
     # ---------------------------------------------------------- UPDATE GAME STATE ---------------------------------------------------------- #
@@ -100,22 +99,15 @@ class Tabuleiro:
 
         # 4.1: If no box is filled, set the active minijogo to the last filled box
         if not any_box_filled:
-            if self.last_filled_box is not None:
-                if self.minijogos[self.last_filled_box[0]][self.last_filled_box[1]].finished == False:
-                    self.active_minijogo = self.minijogos[self.last_filled_box[0]][self.last_filled_box[1]]
-                else:
-                    self.active_minijogo = None
-                self.last_filled_box = None
+            self.setNewActiveMinijogo()
 
         # 4.2: If any box is filled, update the box matrix
         if any_box_filled:
             self.last_filled_box = boxes_coords[-1]
-            for box_coords in boxes_coords:
-                modified_minijogo.quadradinhos[box_coords[0]][box_coords[1]].box_filled = True
-                modified_minijogo.quadradinhos[box_coords[0]][box_coords[1]].owner = move_maker
+            modified_minijogo.updateBoxMatrix(boxes_coords, move_maker)
 
             # 4.2: Check if the modified minijogo is finished
-            minijogo_done = self.checkMinijogoFinished(modified_minijogo)
+            minijogo_done = modified_minijogo.checkFinish()
 
             # 4.2.1: Update minijogo owner attributes 
             if not minijogo_done:
@@ -125,14 +117,10 @@ class Tabuleiro:
                     return play_again
             else:
                 self.last_filled_box = None
-                modified_minijogo.finished = True
                 modified_minijogo.owner = move_maker
 
                 # 4.3: Decide the next active minijogo
-                last_filled_box_x = boxes_coords[-1][0]
-                last_filled_box_y = boxes_coords[-1][1]
-
-                next_active_minijogo = self.minijogos[last_filled_box_x][last_filled_box_y]
+                next_active_minijogo = self.decideNextMinijogo(boxes_coords)
 
                 # 4.4: Check if the next playable minijogo is finished
                 # 4.4.1: If it is, set the active minijogo to None
@@ -230,25 +218,6 @@ class Tabuleiro:
         #self.updateMinijogoOwnersUI()
         #self.updateBoxOwnersUI()
         #print("UI atualizada.") #TEMPORARIO
-        
-
-    def checkMinijogoFinished(self, minijogo):
-        minijogo_done = False
-        jogadores = {self.jogadores[0].name : 0, self.jogadores[1].name : 0}
-
-        # Count the number of boxes filled by each player
-        for row in minijogo.quadradinhos:
-            for quadradinho in row:
-                if quadradinho.box_filled:
-                    jogadores[quadradinho.owner.name] += 1
-        
-        # Check if a player has 5 boxes filled
-        for jogador in jogadores:
-            if jogadores[jogador] == 5:
-                minijogo_done = True
-                break
-
-        return minijogo_done
 
     def findActiveMinijogo(self, event):
         for row in self.minijogos:
@@ -316,6 +285,19 @@ class Tabuleiro:
             if player.name == name:
                 return player
         return None
+    
+    def decideNextMinijogo(self, boxes_coords):
+        last_filled_box_x = boxes_coords[-1][0]
+        last_filled_box_y = boxes_coords[-1][1]
+        return self.minijogos[last_filled_box_x][last_filled_box_y]
+    
+    def setNewActiveMinijogo(self):
+        if self.last_filled_box is not None:
+                if self.minijogos[self.last_filled_box[0]][self.last_filled_box[1]].finished == False:
+                    self.active_minijogo = self.minijogos[self.last_filled_box[0]][self.last_filled_box[1]]
+                else:
+                    self.active_minijogo = None
+                self.last_filled_box = None
     
     def end_game(self):
         pass

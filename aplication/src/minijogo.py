@@ -180,3 +180,17 @@ class Minijogo:
                         any_filled = True
                         filled_boxes.append((x, y))
         return any_filled, filled_boxes
+
+    def updateBoxMatrix(self, boxes_coords, move_maker):
+        for x, y in boxes_coords:
+            self.quadradinhos[x][y].box_filled = True
+            self.quadradinhos[x][y].owner = move_maker
+
+    def checkFinish(self):
+        for row in self.dots:
+            for dot in row:
+                if not dot.right or not dot.down:
+                    return False
+        self.finished = True
+        return True
+    
