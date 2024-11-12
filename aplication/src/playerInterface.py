@@ -54,10 +54,10 @@ class PlayerInterface:
         canvas = tk.Canvas(game_frame, width=620, height=620, bg='white')
         canvas.pack()
 
-        background_image = ImagePil.open("aplication/assets/wood_background.jpg")
-        background_image = background_image.resize((620, 620))
-        background_photo = ImageTk.PhotoImage(background_image)
-        canvas.create_image(0, 0, image=background_photo, anchor=tk.NW)
+        # background_image = ImagePil.open("aplication/assets/wood_background.jpg")
+        # background_image = background_image.resize((620, 620))
+        # background_photo = ImageTk.PhotoImage(background_image)
+        # canvas.create_image(0, 0, image=background_photo, anchor=tk.NW)
 
         self.board = Tabuleiro()
         self.board.create_board(canvas)
