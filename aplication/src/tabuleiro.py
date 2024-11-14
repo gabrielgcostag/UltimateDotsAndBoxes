@@ -56,7 +56,7 @@ class Tabuleiro:
         lines = []
         while play_again:
             if click is not None:
-                self.active_minijogo.startDrawingLine(click, self.findActivePlayer().color)
+                self.startDrawingLine(click, self.findActivePlayer().color)
 
             # 3.1: If the line is not drawn, return
             if not self.active_minijogo.line_drawn:
@@ -76,6 +76,9 @@ class Tabuleiro:
         self.checkBoardResult(move)
 
     # --------------------------------------------------------------------------------------------------------------------------------------- #
+
+    def startDrawingLine(self, click, color):
+        self.active_minijogo.startDrawingLine(click, color)
 
     def getActiveMinijogo(self):
         return self.active_minijogo
