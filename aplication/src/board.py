@@ -1,9 +1,10 @@
 from minijogo import Minijogo
 
-class Tabuleiro:
-    def __init__(self):
-        self.jogadores = []
+class Board:
+    def __init__(self, jogadores):
+        self.jogadores = jogadores
         self.minijogos = [[Minijogo(row, col) for col in range(3)] for row in range(3)]
+        self.minijogos[1][1].minijogo_active = True
         self.game_state = ""
         self.game_done = False
         self.active_minijogo = None
@@ -12,8 +13,9 @@ class Tabuleiro:
     def create_board(self, canvas):
         for row in self.minijogos:
             for game in row:
-                game.create_board(canvas)
+                game.create_minijogo(canvas)
                 game.draw_tic_tac_toe_grid(canvas)
+                game.create_boxes()
 
     def on_press(self, event):
         for row in self.minijogos:

@@ -4,93 +4,133 @@ from tkinter import ttk
 from tkinter import simpledialog
 from dog.dog_actor import DogActor
 from dog.dog_interface import DogPlayerInterface
-from tabuleiro import Tabuleiro
-from PIL import Image, ImageTk
+from board import Board
+from player import Player
 
 class PlayerInterface(DogPlayerInterface):
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Menu Principal")
-        self.root.geometry("300x200")
-        self.root.resizable(False, False)
-        self.board = Tabuleiro()
-        self.create_menu()
-        player_name = simpledialog.askstring(title="Player identification", prompt="Qual o seu nome?")
-        self.dog_server_interface = DogActor()
-        message = self.dog_server_interface.initialize(player_name, self)
-        messagebox.showinfo(message=message)
-        #self.enough_players = False
-        #self.start = False
-        #self.rec_start = False
-        #self.rec_withdrawal = False
-        #self.rec_move = False
-        #self.reset = False
-
-    def create_menu(self):
-        menubar = tk.Menu(self.root)
-        self.root.config(menu=menubar)
-
-        style = ttk.Style()
-        style.configure('TButton', font=('Helvetica', 16), padding=10)
-        style.configure('Start.TButton', background='green', foreground='black')
-        style.configure('Settings.TButton', background='green', foreground='black')
-
-        start_button = ttk.Button(self.root, text="Começar Jogo", command=self.start_game, style='Start.TButton')
-        start_button.pack(expand=True, pady=10)
-
-        settings_button = ttk.Button(self.root, text="Configurações", command=self.show_settings, style='Settings.TButton')
-        settings_button.pack(expand=True, pady=10)
-
-    def start_game(self):
-        self.root.destroy()
-        game_root = tk.Tk()
-        game_root.title("Jogo")
-        game_root.geometry("620x650")
-        game_root.resizable(False, False)
-        self.start_match()
-
-        top_frame = tk.Frame(game_root)
-        top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
-
-        back_button = ttk.Button(top_frame, text="← Menu", command=lambda: self.back_to_menu(game_root), width=10)
-        back_button.pack(side=tk.LEFT, padx=5)
-
-        game_frame = tk.Frame(game_root)
-        game_frame.pack()
-
-        canvas = tk.Canvas(game_frame, width=620, height=620, bg='white')
-        canvas.pack()
-
-        original_image = Image.open("assets/wood_background.jpg")
-        resized_image = original_image.resize((620, 620))
-        self.background_image = ImageTk.PhotoImage(resized_image)
-        canvas.create_image(0, 0, anchor=tk.NW, image=self.background_image)
-
-        self.board = Tabuleiro()
-        self.board.create_board(canvas)
-
-        canvas.bind("<ButtonPress-1>", self.board.on_press)
-        canvas.bind("<B1-Motion>", self.board.on_drag)
-        canvas.bind("<ButtonRelease-1>", self.board.on_release)
-
-        game_root.mainloop()
-
-    def back_to_menu(self, game_root):
-        game_root.destroy()
-        self.__init__()
-
-    def show_settings(self):
-        messagebox.showinfo("Configurações", "Aqui estarão as configurações. Como alterar cor, tamanho do tabuleiro, etc.")
+        self.canvas = None
+        self.root = None
+        self.enough_players = False
+        self.rec_withdrawal = False
+        self.rec_move = False
+        self.reset = False
+        self.board = None
+        self.temp = None
+        self.start_button = None
+        self.dog_server_interface = None
 
     def start_match(self):
+        # 1: Wait for user to start match
+        # 2: IF YES, Request match start
         start_status = self.dog_server_interface.start_match(2)
         message = start_status.get_message()
         messagebox.showinfo(message=message)
-    
+
+        # 3: Evaluate response
+        if start_status.code != '2':
+            self.root.destroy()
+            return
+        
+        # 4: instantiate Board
+        self.start_button.destroy()
+        self.board = Board(self.temp)
+        
+        # 5: instantiate Minijogos
+        # HAPPENS IN THE BOARD CONSTRUCTOR
+
+        # 6: instantiate Dots AND 7: instantiate Quadradinhos
+        self.board.create_board(self.canvas)
+
+        # 8: Get starter from start status
+        vez = int(start_status.players[0][2])
+
+        # 9: Update player active status attribute
+        self.board.jogadores[vez-1].active = True
+
     def receive_start(self, start_status):
         message = start_status.get_message()
         messagebox.showinfo(message=message)
 
-if __name__ == "__main__":
+        # 1: remove start button
+        self.start_button.destroy()
+
+        # 1: Reset the game (USE CASE)
+        self.reset_game()
+
+        # 3: Get remote player name from start status
+        self.temp[1].name = start_status.players[1][0].capitalize()
+
+        # 4: instantiate Board
+        self.board = Board(self.temp)
+
+        # 5: instantiate Minijogos
+        # HAPPENS IN THE BOARD CONSTRUCTOR
+
+        # 6: instantiate Dots AND 7: instantiate Quadradinhos
+        self.board.create_board(self.canvas)
+
+        # 7: Get starter from start status
+        vez = int(start_status.players[0][2])
+
+        # 8: Update player active status attribute
+        self.board.jogadores[vez-1].active = True
+
+    def on_press(self, event):
+        if self.board:
+            self.board.on_press(event)
+    
+    def on_drag(self, event):
+        if self.board:
+            self.board.on_drag(event)
+
+    def on_release(self, event):
+        if self.board:
+            self.board.on_release(event)
+
+    def send_move(self, move):
+        self.dog_server_interface.send_move(move)
+
+    def reset_game(self):
+        if self.board:
+            self.board = None
+            for player in self.temp:
+                player.active = False
+
+def initialize():
+    # 1: instantiate PlayerInterface
     app = PlayerInterface()
+
+    # 2: Request player name
+    player_name = simpledialog.askstring(title="Player identification", prompt="Qual o seu nome?")
+    app.dog_server_interface = DogActor()
+
+    # 6: Communicate result of connection request
+    message = app.dog_server_interface.initialize(player_name, app)
+    messagebox.showinfo(message=message)
+
+    # 3: instantiate TKinter elements
+    app.root = tk.Tk()
+    app.root.title("Jogo")
+    app.root.geometry("620x650")
+    app.root.resizable(False, False)
+    game_frame = tk.Frame(app.root)
+    game_frame.pack()
+    app.canvas = tk.Canvas(game_frame, width=620, height=620, bg='white')
+    app.canvas.pack()
+    app.canvas.bind("<ButtonPress-1>", app.on_press)
+    app.canvas.bind("<B1-Motion>", app.on_drag)
+    app.canvas.bind("<ButtonRelease-1>", app.on_release)
+  
+    app.start_button = ttk.Button(game_frame, text="Start Game", command=app.start_match)
+    app.start_button.place(relx=0.5, rely=0.5, anchor="center", width=200, height=50)
+    
+    # 4: Instantiate players
+    app.temp = [Player("blue"), Player("red")]
+    app.temp[0].name = player_name.capitalize()
+    
+    # 5: create and initialize dog actor
     app.root.mainloop()
+
+if __name__ == "__main__":
+    initialize()

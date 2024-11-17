@@ -1,4 +1,5 @@
 from dot import Dot
+from box import Box
 
 class Minijogo:
     def __init__(self, section_row, section_col):
@@ -18,7 +19,7 @@ class Minijogo:
         self.minijogo_active = False
         self.line_valid = False
 
-    def create_board(self, canvas):
+    def create_minijogo(self, canvas):
         total_dot_size = (3 * self.spacing) + self.dot_size
         offset = (125 - total_dot_size) / 2
 
@@ -60,6 +61,14 @@ class Minijogo:
             self.current_line = None
             self.start_point = None
             
+    def create_boxes(self):
+        for row in range (3):
+            row_boxes = []
+            for col in range(3):
+                box = Box()
+                row_boxes.append(box)
+            self.quadradinhos = (row_boxes)
+
     def get_nearest_point(self, x, y, is_droppable=False):
         tolerance = self.dot_size // 2 if not is_droppable else self.dot_size * 1.5
         for row_points in self.dots:
