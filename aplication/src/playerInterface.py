@@ -1,80 +1,130 @@
-import tkinter as tk
 from tkinter import messagebox
-from tkinter import ttk
-from tabuleiro import Tabuleiro
-from PIL import Image as ImagePil
-from PIL import ImageTk
+from dog.dog_interface import DogPlayerInterface
 
-class PlayerInterface:
+from board import Board
+
+class PlayerInterface(DogPlayerInterface):
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Menu Principal")
-        self.root.geometry("300x200")
-        self.root.resizable(False, False)
-        self.board = Tabuleiro()
-        self.create_menu()
-        self.enough_players = False
-        self.start = False
-        self.rec_start = False
-        self.rec_withdrawal = False
-        self.rec_move = False
-        self.reset = False
+        self.board = None
+        self.canvas = None
+        self.root = None
+        self.start_button = None
+        self.dog_server_interface = None
+        self.temp = None
 
-    def create_menu(self):
-        menubar = tk.Menu(self.root)
-        self.root.config(menu=menubar)
+    def on_press(self, event):
+        if self.board:
+            self.board.on_press(event)
+    
+    def on_drag(self, event):
+        if self.board:
+            self.board.on_drag(event)
 
-        style = ttk.Style()
-        style.configure('TButton', font=('Helvetica', 16), padding=10)
-        style.configure('Start.TButton', background='green', foreground='black')
-        style.configure('Settings.TButton', background='green', foreground='black')
+    def on_release(self, event):
+        if self.board:
+            self.board.on_release(event)
 
-        start_button = ttk.Button(self.root, text="Começar Jogo", command=self.start_game, style='Start.TButton')
-        start_button.pack(expand=True, pady=10)
+    def send_move(self, move):
+        self.dog_server_interface.send_move(move)
 
-        settings_button = ttk.Button(self.root, text="Configurações", command=self.show_settings, style='Settings.TButton')
-        settings_button.pack(expand=True, pady=10)
+    def notifyGameOver(self, winner):
+        messagebox.showinfo(message="O jogo acabou. O vencedor é: " + winner.name)
 
-    def start_game(self):
+    def exit(self):
         self.root.destroy()
-        game_root = tk.Tk()
-        game_root.title("Jogo")
-        game_root.geometry("620x650")
-        game_root.resizable(False, False)
 
-        top_frame = tk.Frame(game_root)
-        top_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
+    # ------------------------------------------------- RECEIVE WITHDRAWAL NOTIFICATION --------------------------------------------------------- #
+    def receive_withdrawal_notification(self):
+        # 1: Display withdrawal notification
+        messagebox.showinfo(message="O oponente abandonou a partida.")
+        # 2: Close the game
+        self.root.destroy()
 
-        back_button = ttk.Button(top_frame, text="← Menu", command=lambda: self.back_to_menu(game_root), width=10)
-        back_button.pack(side=tk.LEFT, padx=5)
+    # --------------------------------------------------------------- RESET GAME --------------------------------------------------------------- #
+    def reset_game(self):
+        # 1: Check if board is instantiated
+        if self.board:
+            # 2: Remove board from PlayerInterface
+            self.board = None
 
-        game_frame = tk.Frame(game_root)
-        game_frame.pack()
+    # --------------------------------------------------------------- START MATCH --------------------------------------------------------------- #
+    def start_match(self):
+        # 1: Wait for user to start match
+        # 2: IF YES, Request match start
+        start_status = self.dog_server_interface.start_match(2)
+        message = start_status.get_message()
+        messagebox.showinfo(message=message)
 
-        canvas = tk.Canvas(game_frame, width=620, height=620, bg='white')
-        canvas.pack()
+        # 3: Evaluate response
+        if start_status.code != '2':
+            self.root.destroy()
+            return
+        
+        # 4: remove start button
+        self.start_button.destroy()
 
-        # background_image = ImagePil.open("aplication/assets/wood_background.jpg")
-        # background_image = background_image.resize((620, 620))
-        # background_photo = ImageTk.PhotoImage(background_image)
-        # canvas.create_image(0, 0, image=background_photo, anchor=tk.NW)
+        # 5: get remote player name from start status
+        self.temp[1].set_name(start_status.players[1][0].capitalize())
 
-        self.board = Tabuleiro()
-        self.board.create_board(canvas)
+        # 6: instantiate Board
+        self.board = Board(self)
 
-        canvas.bind("<ButtonPress-1>", self.board.on_press)
-        canvas.bind("<B1-Motion>", self.board.on_drag)
-        canvas.bind("<ButtonRelease-1>", self.board.on_release)
+        # 7: instantiate Minijogos
+        # HAPPENS IN THE BOARD CONSTRUCTOR
 
-        game_root.mainloop()
+        # 8: Bind canvas events
+        self.canvas.bind("<ButtonPress-1>", self.board.connectDots)
+        self.canvas.bind("<B1-Motion>", self.board.showLineExtending)
+        self.canvas.bind("<ButtonRelease-1>", self.board.divideReleaseExecution)
 
-    def back_to_menu(self, game_root):
-        game_root.destroy()
-        self.__init__()
+        # 9: instantiate Dots AND 10: instantiate Boxes
+        self.board.create_board(self.canvas)
 
-    def show_settings(self):
-        messagebox.showinfo("Configurações", "Aqui estarão as configurações. Como alterar cor, tamanho do tabuleiro, etc.")
+        # 11: Get starter from start status
+        vez = int(start_status.players[0][2])
+        options = {1: "progress", 2: "wait"}
+        self.board.SetGameState(options[vez])
 
-if __name__ == "__main__":
-    app = PlayerInterface()
-    app.root.mainloop()
+        #12: Update user interface
+        self.board.updateUI()
+
+    # --------------------------------------------------------------- RECEIVE START --------------------------------------------------------------- #
+    def receive_start(self, start_status):
+        # 1: Display start message
+        message = start_status.get_message()
+        messagebox.showinfo(message=message)
+
+        # 2: remove start button
+        self.start_button.destroy()
+
+        # 3: Reset the game (USE CASE)
+        self.reset_game()
+
+        # 4: Get remote player name from start status
+        self.temp[1].set_name(start_status.players[1][0].capitalize())
+
+        # 5: instantiate Board
+        self.board = Board(self)
+
+        # 6: instantiate Minijogos
+        # HAPPENS IN THE BOARD CONSTRUCTOR
+
+        # 7: Bind Tk canvas events
+        self.canvas.bind("<ButtonPress-1>", self.board.connectDots)
+        self.canvas.bind("<B1-Motion>", self.board.showLineExtending)
+        self.canvas.bind("<ButtonRelease-1>", self.board.divideReleaseExecution)
+
+        # 8: instantiate Dots AND 9: instantiate Quadradinhos
+        self.board.create_board(self.canvas)
+
+        # 10: Set starter from start status
+        vez = int(start_status.players[0][2])
+        options = {1: "progress", 2: "wait"}
+        self.board.SetGameState(options[vez])
+
+        #11: Update user interface
+        self.board.updateUI()
+
+    # --------------------------------------------------------------- RECEIVE MOVE --------------------------------------------------------------- #
+    def receive_move(self, move):
+        self.board.receiveMove(move)
