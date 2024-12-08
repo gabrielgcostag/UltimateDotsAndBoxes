@@ -83,7 +83,7 @@ class PlayerInterface(DogPlayerInterface):
         # 11: Get starter from start status
         vez = int(start_status.players[0][2])
         options = {1: "progress", 2: "wait"}
-        self.board.SetGameState(options[vez])
+        self.board.setGameState(options[vez])
 
         #12: Update user interface
         self.board.updateUI()
@@ -120,7 +120,7 @@ class PlayerInterface(DogPlayerInterface):
         # 10: Set starter from start status
         vez = int(start_status.players[0][2])
         options = {1: "progress", 2: "wait"}
-        self.board.SetGameState(options[vez])
+        self.board.setGameState(options[vez])
 
         #11: Update user interface
         self.board.updateUI()

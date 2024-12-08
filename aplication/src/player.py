@@ -3,5 +3,5 @@ class Player:
         self.name = ""
         self.color = color
 
-def set_name(self, name):
-    self.name = name
+    def set_name(self, name):
+        self.name = name
