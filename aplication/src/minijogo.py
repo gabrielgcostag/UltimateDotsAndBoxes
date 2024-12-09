@@ -166,14 +166,14 @@ class Minijogo:
         return None
     
     def areNeighbors(self, point1, point2):
+        are_neighbors = False
         point1 = point1.getCenter()
         point2 = point2.getCenter()
         if point1 and point2:
             dist_x = abs(point1[0] - point2[0])
             dist_y = abs(point1[1] - point2[1])
             are_neighbors = (dist_x == self.spacing and dist_y == 0) or (dist_y == self.spacing and dist_x == 0)
-            return are_neighbors
-        return False
+        return are_neighbors
 
     def saveNewLine(self, line):
         x1y1, x2y2, direction = line

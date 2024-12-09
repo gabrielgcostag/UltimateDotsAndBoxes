@@ -46,6 +46,8 @@ class PlayerInterface(DogPlayerInterface):
         if self.board:
             # 2: Remove board from PlayerInterface
             self.board = None
+            # 3: Start match
+            self.start_match()
 
     # --------------------------------------------------------------- START MATCH --------------------------------------------------------------- #
     def start_match(self):

@@ -147,7 +147,7 @@ class Board:
                 self.move_dict['next_minijogo'] = -1
 
         # 4.2: If any box is filled, update the box matrix
-        if any_box_filled:
+        else:
             self.last_filled_box = boxes_coords[-1]
             modified_minijogo.updateBoxMatrix(boxes_coords, move_maker)
 
@@ -159,8 +159,6 @@ class Board:
                 # 4.2.1.1: If the move maker is the active player, allow them to play again
                 if move_maker == self.findActivePlayer():
                     play_again = True
-                    self.updateUI()
-                    return play_again
             else:
                 modified_minijogo.owner = move_maker
                 modified_minijogo.finished = True
@@ -204,14 +202,12 @@ class Board:
                 win_condition = True
 
             # STEP 5.5: Check if a player has 3 diagonal minijogos (primary diagonal)
-            elif x == y:
-                if x == y and all(self.minijogos[i][i].getOwner() == p_winner for i in range(3)):
-                    win_condition = True
+            elif x == y and all(self.minijogos[i][i].getOwner() == p_winner for i in range(3)):
+                win_condition = True
 
             # STEP 5.6: Check if a player has 3 diagonal minijogos (secondary diagonal)
-            elif x + y == 2:
-                if all(self.minijogos[i][2-i].getOwner() == p_winner for i in range(3)):
-                    win_condition = True
+            elif x + y == 2 and all(self.minijogos[i][2-i].getOwner() == p_winner for i in range(3)):
+                win_condition = True
 
             # STEP 5.7: Check if a player has 5 total minijogos
             elif sum(game.getOwner() == p_winner for row in self.minijogos for game in row) == 5:
