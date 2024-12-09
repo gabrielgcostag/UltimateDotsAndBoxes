@@ -1,7 +1,7 @@
-from tkinter import messagebox
+from tkinter import messagebox, PhotoImage
 from dog.dog_interface import DogPlayerInterface
-
 from board import Board
+from PIL import Image, ImageTk
 
 class PlayerInterface(DogPlayerInterface):
     def __init__(self):
@@ -33,21 +33,18 @@ class PlayerInterface(DogPlayerInterface):
     def exit(self):
         self.root.destroy()
 
+    def reset_game(self):
+    # 1: Check if board is instantiated
+        if self.board:
+            # 2: Remove board from PlayerInterface
+            self.board = None
+
     # ------------------------------------------------- RECEIVE WITHDRAWAL NOTIFICATION --------------------------------------------------------- #
     def receive_withdrawal_notification(self):
         # 1: Display withdrawal notification
         messagebox.showinfo(message="O oponente abandonou a partida.")
         # 2: Close the game
         self.root.destroy()
-
-    # --------------------------------------------------------------- RESET GAME --------------------------------------------------------------- #
-    def reset_game(self):
-        # 1: Check if board is instantiated
-        if self.board:
-            # 2: Remove board from PlayerInterface
-            self.board = None
-            # 3: Start match
-            self.start_match()
 
     # --------------------------------------------------------------- START MATCH --------------------------------------------------------------- #
     def start_match(self):
@@ -74,6 +71,10 @@ class PlayerInterface(DogPlayerInterface):
         # 7: instantiate Minijogos
         # HAPPENS IN THE BOARD CONSTRUCTOR
 
+        image = Image.open("assets/fundo_jogo.jpeg")
+        self.background_image = ImageTk.PhotoImage(image)
+        self.canvas.create_image(0, 0, anchor="nw", image=self.background_image)
+
         # 8: Bind canvas events
         self.canvas.bind("<ButtonPress-1>", self.board.connectDots)
         self.canvas.bind("<B1-Motion>", self.board.showLineExtending)
@@ -99,7 +100,7 @@ class PlayerInterface(DogPlayerInterface):
         # 2: remove start button
         self.start_button.destroy()
 
-        # 3: Reset the game (USE CASE)
+        # 3: Reset the game
         self.reset_game()
 
         # 4: Get remote player name from start status

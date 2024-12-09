@@ -281,11 +281,6 @@ class Board:
                                 self.canvas.create_line(x_start + 40, y_start, x_start, y_start + 40, fill="blue", width=5)
                             else:
                                 self.canvas.create_oval(x_start, y_start, x_start + 40, y_start + 40, outline="red", width=5)
-        active_player = self.findActivePlayer()
-        if active_player:
-            next_player_turn = 'Red' if active_player.color == 'blue' else 'Blue'
-            turn_text = f"Turn: {next_player_turn}"
-            self.canvas.create_text(10, 10, anchor="nw", text=turn_text, fill=next_player_turn, font=("Arial", 16), tags="turn_indicator")
         
     def findClickedMinijogo(self, event):
         for row in self.minijogos:
